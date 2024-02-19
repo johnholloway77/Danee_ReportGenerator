@@ -5,36 +5,27 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:ReportGenerator"
         mc:Ignorable="d"
-        Title="Report Generator" Height="450" Width="800">
-    <Grid>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition/>
-        </Grid.ColumnDefinitions>
-        <!--
-            <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="54*"/> 
-            <ColumnDefinition Width="2*"/>
-            <ColumnDefinition Width="745*"/>
-            </Grid.ColumnDefinitions>
-        -->
+        Title="Report Generator" Height="500" Width="800">
 
-        <DockPanel Margin="213,113,212,217">
-            <WrapPanel  DockPanel.Dock="Top" Margin="0,0,0,10" Height="135" Width="400">
-                <UIElement.RenderTransform>
-                    <TransformGroup>
-                        <ScaleTransform/>
-                        <SkewTransform/>
-                        <RotateTransform/>
-                        <TranslateTransform/>
-                    </TransformGroup>
-                </UIElement.RenderTransform>
-                <Button x:Name="btnOpenFile" Click="btnOpenFile_Click" Height="68" Width="165" Content="Open file"/>
-                <Button x:Name="btnSaveFile" Click="btnSaveFile_Click" Height="68" Width="165" Margin="20" Content="Save file"/>
-            </WrapPanel>
-            <!-- <TextBox Name="txtEditor" />  -->
-        </DockPanel>
 
-        <TextBlock x:Name="MyTextBlock" Margin="62,249,61,138" Text="" FontWeight="Bold" FontSize="14" />
 
-    </Grid>
+    <DockPanel Margin="0,0,0,0">
+        <Menu DockPanel.Dock="Top" RenderTransformOrigin="0.504,1.088">
+            <MenuItem Header="_File" Height="34" Width="68">
+                <MenuItem Header="_Open" Click="btnOpenFile_Click" />
+                <MenuItem Header="_Save" Click="btnSaveFile_Click" />
+                <Separator />
+                <MenuItem Header="_Exit" />
+            </MenuItem>
+        </Menu>
+        <TextBlock x:Name="MyTextBlock" Text="Please load Excel File" TextAlignment="Center"
+                   FontWeight="Bold" FontSize="14" VerticalAlignment="Bottom" Height="26"  />
+
+
+    </DockPanel>
+
+
+
 </Window>
+
+    
