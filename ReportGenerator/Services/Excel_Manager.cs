@@ -4,17 +4,12 @@ using ReportGenerator.Models;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.IO.Packaging;
 using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows;
-using System.Drawing;
-using System.Windows.Media;
 using OfficeOpenXml.Drawing;
 using OfficeOpenXml.Drawing.Vml;
 using OfficeOpenXml.Drawing.Chart;
+using OfficeOpenXml;
+using OfficeOpenXml.Table;
 
 namespace ReportGenerator.services
 {
@@ -71,8 +66,17 @@ namespace ReportGenerator.services
 
         public static int builder(List<Finding> findings, List<Department> departments, string save_location)
         {
+
+            int findingsCount = findings.Count;
+
+
+
+
+            //Lets export the data as a pivot table
             using (ExcelPackage package = new ExcelPackage(@save_location))
             {
+                
+                //Try-catch block to delete an existing sheet if overwriting existing file
                 ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
                 try
                 {
@@ -83,105 +87,168 @@ namespace ReportGenerator.services
                 {
                     Console.WriteLine("No Worksheet to delete");
                 }
+                
 
+                int row_Number = 0;
                 var sheet = package.Workbook.Worksheets.Add($"Analysis {DateTime.Now.ToShortDateString()}");
 
-                //ExcelChart chart = sheet.Drawings.AddChart("Chart", eChartType.ColumnClustered);
-
-                int row_Number = 0; 
-                
                 //headers and all that jazz
-                sheet.Cells["A1"].Value = $"Report generated on {DateTime.Now}";
+                sheet.Cells["D1"].Value = $"Report generated on {DateTime.Now}";
 
-                sheet.Cells["A2"].Value = "Date Entered";
-                sheet.Cells["B2"].Value = "Due Date";
-                sheet.Cells["C2"].Value = "Findings Number";
-                sheet.Cells["D2"].Value = "Findings Title";
-                sheet.Cells["E2"].Value = "Days Overdue:";
-                sheet.Cells["F2"].Value = "Days From Entered";
-                sheet.Cells["G2"].Value = "Status";
-                sheet.Cells["H2"].Value = "Department";
-                sheet.Cells["I2"].Value = "Owner";
-                
-                //style for headers.
-                sheet.Row(1).Style.Font.Bold = true;
-                sheet.Row(1).Height = 20;
-                sheet.Row(2).Style.Font.Bold = true;
-                sheet.Row(2).Height = 20;
-
-                sheet.Column(1).Width = 13;
-                sheet.Column(2).Width = 13;
-                sheet.Column(3).Width = 15;
-                sheet.Column(4).Width = 60;
-                sheet.Column(5).Width = 15;
-                sheet.Column(6).Width = 15;
-                sheet.Column(7).Width = 11;
-                sheet.Column(8).Width = 15;
-                sheet.Column(9).Width = 15;
-
-                row_Number = 3;
-                for(int i = 0; i < findings.Count; i++) 
+                using (ExcelRange Rng = sheet.Cells[$"A3:I{findingsCount + 3}"])
                 {
-                    sheet.Cells[$"A{3 + i}"].Value = findings[i].start_Date.ToShortDateString();
-                    sheet.Cells[$"B{3 + i}"].Value = findings[i].due_Date.ToShortDateString();
-                    sheet.Cells[$"C{3 + i}"].Value = findings[i].id_Number;
-                    sheet.Cells[$"D{3 + i}"].Value = findings[i].title;
-                    sheet.Cells[$"E{3 + i}"].Value = findings[i].days_Overdue;
-                    sheet.Cells[$"F{3 + i}"].Value = findings[i].days_From_entered;
-                    sheet.Cells[$"G{3 + i}"].Value = (status)findings[i].late_status;
-                    sheet.Cells[$"H{3 + i}"].Value = findings[i].department;
-                    sheet.Cells[$"I{3 + i}"].Value = findings[i].owner;
+                    ExcelTable table = sheet.Tables.Add(Rng, "tblFindings");
 
-                    sheet.Cells[$"G{3 + i}"].Style.Font.Bold = true;
-                    sheet.Cells[$"G{3 + i}"].Style.Font.Color.SetColor(System.Drawing.Color.White);
-                    sheet.Cells[$"G{3 + i}"].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
-                    sheet.Cells[$"G{3 + i}"].Style.Fill.PatternType = ExcelFillStyle.Solid;
+                    //Set column positions and names
+                    table.Columns[0].Name = "Date Entered";
+                    table.Columns[1].Name = "Findings Number";
+                    table.Columns[2].Name = "ID Number";
+                    table.Columns[3].Name = "Findings Title";
+                    table.Columns[4].Name = "Days Overdue:";
+                    table.Columns[5].Name = "Days from Entered";
+                    table.Columns[6].Name = "Status";
+                    table.Columns[7].Name = "Department";
+                    table.Columns[8].Name = "Owner";
 
-                    switch (findings[i].late_status)
+
+                    //show the filter thingimajig
+                    table.ShowHeader = true;
+                    table.ShowFilter = true;
+                   
+                }
+
+
+                row_Number = 4;
+
+                for (int i = 0 ; i < findings.Count; i++)
+                {
+                    using(ExcelRange Rng = sheet.Cells[$"A{i + 4}"])
                     {
-                        case 0:
-                            sheet.Cells[$"G{3 + i}"].Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.Green);
-                            break;
+                        Rng.Value = findings[i].start_Date.ToShortDateString();
+                    }
+                    using (ExcelRange Rng = sheet.Cells[$"B{i + 4}"])
+                    {
+                        Rng.Value = findings[i].due_Date.ToShortDateString();
+                    }
+                    using (ExcelRange Rng = sheet.Cells[$"C{i + 4}"])
+                    {
+                        Rng.Value = findings[i].id_Number;
+                    }
+                    using (ExcelRange Rng = sheet.Cells[$"D{i + 4}"])
+                    {
+                        Rng.Value = findings[i].title;
+                    }
+                    using (ExcelRange Rng = sheet.Cells[$"E{i + 4}"])
+                    {
+                        Rng.Value = findings[i].days_Overdue;
+                    }
+                    using (ExcelRange Rng = sheet.Cells[$"F{i + 4}"])
+                    {
+                        Rng.Value = findings[i].days_From_entered;
+                    }
+                    using (ExcelRange Rng = sheet.Cells[$"G{i + 4}"])
+                    {
+                        Rng.Value = (status)findings[i].late_status;
 
-                        case 1:
-                            sheet.Cells[$"G{3 + i}"].Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.Yellow);
-                            break;
-                        case 2:
-                            sheet.Cells[$"G{3 + i}"].Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.Red);
-                            break;
-                        default:
-                            break;
+                        Rng.Style.Font.Bold = true;
+                        Rng.Style.Font.Color.SetColor(System.Drawing.Color.White);
+                        Rng.Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+                        Rng.Style.Fill.PatternType = ExcelFillStyle.Solid;
 
+                        switch (findings[i].late_status)
+                        {
+                            case 0:
+                                Rng.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.Green);
+                                break;
+
+                            case 1:
+                                Rng.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.Yellow);
+                                break;
+                            case 2:
+                                Rng.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.Red);
+                                break;
+                            default:
+                                break;
+
+                        }
+                    }
+                    using (ExcelRange Rng = sheet.Cells[$"H{i + 4}"])
+                    {
+                        Rng.Value = findings[i].department;
+                    }
+                    using (ExcelRange Rng = sheet.Cells[$"I{i + 4}"])
+                    {
+                        Rng.Value = findings[i].owner;
+                        
+                    }
+
+
+                    row_Number++;
+
+                    
+
+                }
+
+                row_Number++;
+                row_Number++;
+
+
+                using (ExcelRange Rng = sheet.Cells[$"A{row_Number}:D{row_Number + departments.Count}"])
+                {
+                    ExcelTable deptTable = sheet.Tables.Add(Rng, "deptTable");
+                    deptTable.Columns[0].Name = "Department";
+                    deptTable.Columns[1].Name = "Open";
+                    deptTable.Columns[2].Name = "Due";
+                    deptTable.Columns[3].Name = "Past Due";
+
+                }
+
+                row_Number++;
+                int start = row_Number;
+
+                foreach (var (department, i) in departments.Select((department, i) => (department, i)))
+                {
+
+
+
+                    using (ExcelRange Rng = sheet.Cells[$"A{i + start}"])
+                    {
+                        Rng.Value = department.name;
+                    }
+                    using (ExcelRange Rng = sheet.Cells[$"B{i + start}"])
+                    {
+                        Rng.Value = department.open;
+                    }
+
+                    using (ExcelRange Rng = sheet.Cells[$"C{i + start}"])
+                    {
+                        Rng.Value = department.due;
+                    }
+                    using (ExcelRange Rng = sheet.Cells[$"D{i + start}"])
+                    {
+                        Rng.Value = department.pastDue;
                     }
 
                     row_Number++;
 
                 }
 
-                row_Number++;
-
-                sheet.Cells[$"A{row_Number}"].Value = "Department";
-                sheet.Cells[$"B{row_Number}"].Value = "Open";
-                sheet.Cells[$"C{row_Number}"].Value = "Due";
-                sheet.Cells[$"D{row_Number}"].Value = "Past Due";
-
-                sheet.Row(row_Number).Style.Font.Bold = true;
-                sheet.Row(row_Number).Height = 20;
-
-                row_Number++;
 
 
-                foreach(Department department in departments)
-                {
-                    sheet.Cells[$"A{row_Number}"].Value = department.name;
-                    sheet.Cells[$"B{row_Number}"].Value = department.open;
-                    sheet.Cells[$"C{row_Number}"].Value = department.due;
-                    sheet.Cells[$"D{row_Number}"].Value = department.pastDue;
-                    row_Number++;
-                }
 
-               // var pivotTable = package.Workbook.Worksheets[$"Analysis {DateTime.Now.ToShortDateString()}"].PivotTables[0];
-               
+
+
+
+                    sheet.Cells[sheet.Dimension.Address].AutoFitColumns(); //wtf does this do?
+
+
+
+
+                //ExcelChart chart = sheet.Drawings.AddChart("Chart", eChartType.ColumnClustered);
+
+                // }
+
+
 
 
                 try
@@ -202,11 +269,13 @@ namespace ReportGenerator.services
                     }
 
 
-                    FileStream fs = File.Create(save_location);
-                    fs.Close();
+                       //FileStream fs = File.Create(save_location);
+                       // fs.Close();
 
-                    File.WriteAllBytes(save_location, package.GetAsByteArray());
-                    package.Dispose();
+                       // File.WriteAllBytes(save_location, package.GetAsByteArray());
+                       // package.Dispose();
+
+                    package.SaveAs(save_location);
 
                     return 0; //return successfully
                 }
